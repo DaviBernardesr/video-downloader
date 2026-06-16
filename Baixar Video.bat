@@ -8,12 +8,22 @@ echo    BAIXAR VIDEO EM FULL HD (MP4)
 echo ============================================
 echo.
 
-REM --- 1) Procura o Python ---
-set "PY="
-where python >nul 2>&1 && set "PY=python"
-if not defined PY where py >nul 2>&1 && set "PY=py"
-if not defined PY goto :sem_python
+REM --- 1) Procura o Python (instala se faltar) ---
+call :achar_python
+if defined PY goto :tem_python
 
+echo Python nao encontrado. Vou baixar e instalar automaticamente.
+echo.
+echo [0/2] Baixando o instalador do Python...
+powershell -NoProfile -Command "try { $ProgressPreference='SilentlyContinue'; Invoke-WebRequest -Uri 'https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe' -OutFile 'python_setup.exe' } catch { exit 1 }"
+if errorlevel 1 goto :erro_download
+echo Instalando o Python, aguarde 1-2 minutos ^(pode pedir confirmacao^)...
+python_setup.exe /quiet InstallAllUsers=0 PrependPath=1 Include_pip=1 Include_test=0
+del /q python_setup.exe >nul 2>&1
+call :achar_python
+if not defined PY goto :reabrir
+
+:tem_python
 REM --- 2) Garante a pasta bin ---
 if not exist "bin" mkdir "bin"
 
@@ -48,21 +58,32 @@ set /p "DENOVO=Baixar outro? (S/N): "
 if /I "%DENOVO%"=="S" goto :baixar
 goto :fim
 
-:sem_python
-echo [ERRO] Python nao encontrado.
+:reabrir
 echo.
-echo Instale o Python em: https://www.python.org/downloads/
-echo IMPORTANTE: marque a opcao "Add Python to PATH" na instalacao.
-echo Depois feche e abra este programa de novo.
-start "" "https://www.python.org/downloads/"
+echo ============================================
+echo  Python instalado com sucesso!
+echo  FECHE esta janela e abra o programa de novo
+echo  para terminar a configuracao.
+echo ============================================
 goto :fim
 
 :erro_download
 echo.
-echo [ERRO] Nao consegui baixar as ferramentas.
-echo Verifique sua internet e tente novamente.
+echo [ERRO] Nao consegui baixar. Verifique sua internet e tente de novo.
 goto :fim
 
 :fim
 echo.
 pause
+exit /b
+
+REM ============ sub-rotina: localiza o Python ============
+:achar_python
+set "PY="
+REM 1) caminho de instalacao padrao (evita o stub da Microsoft Store)
+for /d %%D in ("%LOCALAPPDATA%\Programs\Python\Python3*") do if exist "%%D\python.exe" set "PY=%%D\python.exe"
+if defined PY exit /b
+REM 2) Python real no PATH (--version falha no stub da Store)
+python --version >nul 2>&1 && set "PY=python" && exit /b
+py --version >nul 2>&1 && set "PY=py" && exit /b
+exit /b
