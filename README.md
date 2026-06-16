@@ -2,7 +2,17 @@
 
 Script em Python para baixar vídeos do YouTube em **Full HD (1080p) MP4**, priorizando o codec **H.264** para máxima compatibilidade com qualquer player, TV ou celular.
 
-## Requisitos
+## Windows — jeito fácil (1 clique)
+
+1. Baixe a pasta do projeto (botão verde **Code → Download ZIP**) e extraia.
+2. Tenha o **Python 3** instalado ([python.org](https://www.python.org/downloads/) — marque *"Add Python to PATH"*).
+3. Dê **dois cliques** em **`Baixar Video.bat`**.
+
+Na primeira vez ele baixa sozinho o `yt-dlp` e o `ffmpeg` (numa pasta `bin\` local — não precisa instalar nada). Depois é só colar o link e apertar Enter. Pra baixar vários, ele pergunta "Baixar outro?" ao terminar.
+
+---
+
+## Requisitos (uso manual / macOS / Linux)
 
 - Python 3
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) e [ffmpeg](https://ffmpeg.org/)
