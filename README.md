@@ -7,26 +7,48 @@ Script em Python para baixar vídeos do YouTube em **Full HD (1080p) MP4**, prio
 - Python 3
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) e [ffmpeg](https://ffmpeg.org/)
 
-No macOS (Homebrew):
+### Windows
+
+No PowerShell:
+
+```powershell
+winget install yt-dlp.yt-dlp
+winget install Gyan.FFmpeg
+```
+
+Depois **feche e abra o terminal de novo** (pro PATH atualizar). Se não tiver `winget`, dá pra usar `pip install yt-dlp` e instalar o ffmpeg manualmente.
+
+### macOS
 
 ```bash
 brew install yt-dlp ffmpeg
 ```
 
+### Linux
+
+```bash
+sudo apt install yt-dlp ffmpeg     # ou: pip install yt-dlp
+```
+
+> Se faltar algo, o próprio script avisa e mostra o comando de instalação ao rodar.
+
 ## Uso
+
+No Windows use `python`; no macOS/Linux use `python3`.
 
 ```bash
 # por link
-python3 baixar_video.py "https://youtu.be/xxxxx"
+python baixar_video.py "https://youtu.be/xxxxx"
 
 # por busca (baixa o primeiro resultado)
-python3 baixar_video.py "henrique e juliano flor e o beija-flor"
+python baixar_video.py "henrique e juliano flor e o beija-flor"
 
 # outra resolução (ex: 720p)
-python3 baixar_video.py "<link>" -q 720
+python baixar_video.py "<link>" -q 720
 
-# outra pasta de destino (padrão: ~/Downloads/Videos)
-python3 baixar_video.py "<link>" -o ~/Videos
+# outra pasta de destino
+python baixar_video.py "<link>" -o "C:/Videos"      # Windows
+python3 baixar_video.py "<link>" -o ~/Videos         # macOS/Linux
 ```
 
 ## O que faz

@@ -1,24 +1,35 @@
 #!/usr/bin/env python3
-"""Baixa vídeos em Full HD (MP4) — script standalone.
+"""Baixa vídeos em Full HD (MP4) — script standalone (Windows, macOS e Linux).
 
 Uso:
-    python3 baixar_video.py "<link ou nome para buscar>"
-    python3 baixar_video.py "https://youtu.be/xxxx"
-    python3 baixar_video.py "henrique e juliano flor e o beija-flor"
-    python3 baixar_video.py "<link>" -q 720          # outra resolução
-    python3 baixar_video.py "<link>" -o ~/Videos      # outra pasta
+    python baixar_video.py "<link ou nome para buscar>"
+    python baixar_video.py "https://youtu.be/xxxx"
+    python baixar_video.py "henrique e juliano flor e o beija-flor"
+    python baixar_video.py "<link>" -q 720          # outra resolução
+    python baixar_video.py "<link>" -o "C:/Videos"   # outra pasta
 
-Requisitos: yt-dlp e ffmpeg instalados (Homebrew, bin/ local ou no PATH).
+(No macOS/Linux use python3 no lugar de python.)
+
+Requisitos: yt-dlp e ffmpeg instalados (no PATH, ou numa pasta bin/ ao lado
+do script). Rode o programa sem nada que ele mostra como instalar.
 """
 from __future__ import annotations
 import argparse
 import os
 import platform
 import re
+import shutil
 import subprocess
 import sys
 
 _WINDOWS = platform.system() == "Windows"
+
+# Console do Windows usa cp1252 e quebra com emojis/acentos — força UTF-8.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 
 def _get_bin(name: str) -> str:
@@ -31,7 +42,7 @@ def _get_bin(name: str) -> str:
         brew = f"/opt/homebrew/bin/{name}"
         if os.path.exists(brew):
             return brew
-    return name
+    return shutil.which(name) or shutil.which(exe) or name
 
 
 YTDLP      = _get_bin("yt-dlp")
@@ -43,6 +54,32 @@ _URL_RE = re.compile(r"^https?://", re.IGNORECASE)
 
 def is_url(text: str) -> bool:
     return bool(_URL_RE.match(text.strip()))
+
+
+def _found(resolved: str) -> bool:
+    """True se o binário foi localizado (caminho completo), não só o nome."""
+    return os.path.sep in resolved and os.path.exists(resolved)
+
+
+def check_deps() -> bool:
+    """Verifica yt-dlp e ffmpeg; se faltar, mostra como instalar e retorna False."""
+    faltando = [n for n, p in (("yt-dlp", YTDLP), ("ffmpeg", FFMPEG)) if not _found(p)]
+    if not faltando:
+        return True
+
+    print(f"❌ Não encontrei: {', '.join(faltando)}\n")
+    print("Como instalar:")
+    if _WINDOWS:
+        print("  Windows (PowerShell, mais fácil):")
+        print("    winget install yt-dlp.yt-dlp")
+        print("    winget install Gyan.FFmpeg")
+        print("  Depois FECHE e ABRA o terminal de novo (pro PATH atualizar).")
+        print("  Alternativa: pip install yt-dlp  (ffmpeg ainda precisa ser instalado)")
+    elif platform.system() == "Darwin":
+        print("  macOS (Homebrew):  brew install yt-dlp ffmpeg")
+    else:
+        print("  Linux:  sudo apt install yt-dlp ffmpeg   (ou: pip install yt-dlp)")
+    return False
 
 
 def build_cmd(source: str, dest: str, height: int) -> list:
@@ -82,9 +119,12 @@ def main() -> int:
     parser.add_argument("fonte", help="Link do vídeo ou texto para buscar no YouTube")
     parser.add_argument("-q", "--qualidade", type=int, default=1080,
                         help="Altura máxima em pixels (padrão: 1080 = Full HD)")
-    parser.add_argument("-o", "--pasta", default=os.path.expanduser("~/Downloads/Videos"),
+    parser.add_argument("-o", "--pasta", default=os.path.join("~", "Downloads", "Videos"),
                         help="Pasta de destino (padrão: ~/Downloads/Videos)")
     args = parser.parse_args()
+
+    if not check_deps():
+        return 1
 
     dest = os.path.expanduser(args.pasta)
     os.makedirs(dest, exist_ok=True)
@@ -99,7 +139,7 @@ def main() -> int:
     try:
         proc = subprocess.run(cmd)
     except FileNotFoundError:
-        print("❌ yt-dlp não encontrado. Instale com: brew install yt-dlp ffmpeg")
+        check_deps()
         return 1
 
     if proc.returncode == 0:
